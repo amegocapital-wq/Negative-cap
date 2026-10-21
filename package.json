@@ -5,15 +5,18 @@
   "description": "Hookline \u2014 turn long-form video transcripts into scroll-stopping short-form clips.",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --host 0.0.0.0",
-    "engine:check": "esbuild tools/engine-check.ts --bundle --platform=node --format=esm --outfile=.engine-check.mjs && node .engine-check.mjs",
     "android:add": "npx cap add android",
-    "android:sync": "npm run build && npx cap sync android",
     "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug",
-    "ui:smoke": "esbuild tools/ui-smoke.tsx --bundle --platform=node --format=esm --external:jsdom --outfile=.ui-smoke.mjs --loader:.css=empty && node .ui-smoke.mjs",
-    "check": "npm run engine:check && npm run ui:smoke"
+    "android:sync": "npm run build && npx cap sync android",
+    "build": "tsc --noEmit && vite build",
+    "build:standalone": "tsc --noEmit && vite build --config vite.standalone.config.ts",
+    "check": "npm run engine:check && npm run ui:smoke && npm run standalone:check",
+    "dev": "vite --host 0.0.0.0",
+    "engine:check": "esbuild tools/engine-check.ts --bundle --platform=node --format=esm --outfile=.engine-check.mjs && node .engine-check.mjs",
+    "preview": "vite preview --host 0.0.0.0",
+    "serve": "node standalone/serve.mjs",
+    "standalone:check": "node tools/standalone-check.mjs",
+    "ui:smoke": "esbuild tools/ui-smoke.tsx --bundle --platform=node --format=esm --external:jsdom --outfile=.ui-smoke.mjs --loader:.css=empty && node .ui-smoke.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.0",

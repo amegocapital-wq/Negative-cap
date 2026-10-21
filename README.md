@@ -18,32 +18,56 @@ to write sharper hooks.
 
 ---
 
-## Get the app (Android)
+## Get the app
 
-**Direct download:**
+Hookline is a **self-contained app**. The same build ships three ways — pick whichever is easiest for
+you. None of them needs an account, a server, or a network connection to run.
 
-```
-https://github.com/amegocapital-wq/Negative-cap/releases/latest/download/Hookline.apk
-```
+### 1. Single file — no install, works anywhere
 
-Open that link on your phone → it downloads `Hookline.apk` → tap it → allow *install unknown apps*
-for your browser when Android asks.
+`standalone/Hookline.html` is the whole app in **one 244 kB file** with the JS and CSS inlined. Zero
+external requests.
 
-Every push to `main` also builds an APK you can grab from **Actions → Build APK → Hookline-APK**, and
-pushing a tag like `v1.0.1` publishes a fresh release at the link above.
+- Copy it to your phone (download, USB, email, chat app — anything).
+- Open it with a browser → it runs. Data is saved in that browser on the device.
+- **Add to Home Screen** (Chrome ⋯ menu / Safari share sheet) and it launches full-screen like a
+  native app, icon and all.
+- It also works from a plain static host, a USB stick, or `file://` — nothing else required.
 
-> Updating: CI build machines generate a fresh debug key each run, so a newer build may refuse to
-> install over an older one. Uninstall the old app first, or add a signing key once
-> ([Signing](#signing)) and every build will update in place.
-
-## Run it in a browser
+Serve it locally with no dependencies at all:
 
 ```bash
-npm install
-npm run dev          # http://localhost:5173
+node standalone/serve.mjs        # → http://localhost:5173
+PORT=8080 node standalone/serve.mjs
 ```
 
-The web version is the same app (Capacitor wraps it for Android), handy for quick checks while editing.
+### 2. Android APK (native shell, installs like any app)
+
+Built by the workflow included in this repo (`.github/workflows/build-apk.yml`): **Actions → Build APK
+→ Run workflow**, then download the `Hookline-APK` artifact. Or build it yourself:
+
+```bash
+npm ci
+npm run android:apk     # → android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Then copy the APK to your phone, tap it, and allow *install unknown apps* when Android asks.
+
+Pushing a tag (`v1.0.2`) publishes the APK to **Releases** automatically, and the workflow supports a
+signed release build — see [Signing](#signing).
+
+> Updating a sideloaded APK: CI machines generate a fresh debug key each run, so a newer build may
+> refuse to install over an older one. Uninstall first, or add a signing key once ([Signing](#signing))
+> and updates apply in place.
+
+### 3. Web build
+
+```bash
+npm ci
+npm run dev               # dev server with hot reload → http://localhost:5173
+npm run build             # production bundle → dist/
+npm run build:standalone  # single-file build → standalone/Hookline.html
+```
 
 ## Build the APK locally
 
@@ -107,7 +131,12 @@ src/
   data/sample.ts        demo transcript
 tools/
   engine-check.ts       headless engine tests (npm run engine:check)
+  ui-smoke.tsx          renders the real app in jsdom (npm run ui:smoke)
+  standalone-check.mjs  boots the single-file build and drives the UI
   make-icons.sh         regenerates the Android icon + splash art
+standalone/
+  Hookline.html         ← the whole app in one file (generated, committed)
+  serve.mjs             zero-dependency static server
 android/                committed Capacitor Android project
 docs/EXTENDING.md       ← how to change things (start here)
 ```
@@ -123,6 +152,9 @@ npm run build          # typecheck + production bundle
   clip is missing a hook, overlaps another, runs past the transcript, or if ranking is not descending.
 - `npm run ui:smoke` — renders the real app in jsdom, generates a set, opens a clip, swaps a hook and
   forces an AI-provider failure to prove the fallback works. Catches blank screens in about a second.
+- `npm run standalone:check` — loads `standalone/Hookline.html` with **scripts enabled and no network**,
+  then drives the real UI (sample → generate → open a clip). This is the exact file that ships, so a
+  pass means the app genuinely boots.
 
 CI runs both before every APK build.
 

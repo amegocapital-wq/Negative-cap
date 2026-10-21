@@ -4,13 +4,13 @@ A guide to the changes you'll most likely want, ordered from "one line" to "new 
 ends with the same three commands:
 
 ```bash
-npm run engine:check   # did I break an invariant?
-npm run ui:smoke       # does the app still render and generate? (~1s)
-npm run dev            # look at it
-npm run build          # typecheck + bundle (also what CI does before the APK)
+npm run engine:check                      # did I break an invariant?
+npm run ui:smoke                          # does the app render + generate? (~1s)
+npm run build:standalone && npm run check  # single-file build + all three suites
+npm run dev                               # look at it (hot reload)
 ```
 
-`npm run check` runs both test suites.
+`npm run check` runs all three suites (engine, UI, standalone).
 
 The engine is pure TypeScript with no DOM access, so `engine:check` runs it in Node in under a second.
 Add a case to `tools/engine-check.ts` whenever you change behaviour — that file is the contract.
@@ -123,6 +123,29 @@ pasted, and feed `segments` into `parseTranscript` as `"0:12 text"` lines (or st
 3. Render it in `src/App.tsx` and add an entry to `NAV` (icon import from `src/ui/icons.tsx`).
 4. Compose from the existing primitives in `src/ui/components.tsx` (`ScoreRing`, `Bar`, `Toggle`,
    `Stepper`, `Notice`, `Empty`) so styling stays consistent.
+
+## 8b. Standalone single-file build
+
+`standalone/Hookline.html` is the entire app — JS, CSS and all — in one file with **no external
+requests**. It is what makes Hookline an app you can hand to someone: open it from a file manager, host
+it anywhere, or add it to a phone home screen.
+
+```bash
+npm run build:standalone    # → standalone/Hookline.html
+npm run standalone:check    # boots it in jsdom with NO network and drives the UI
+npm run serve               # dependency-free server → http://localhost:5173
+```
+
+Two rules the build encodes (both were real bugs — don't regress them):
+
+1. **Inject the bundle at the end of `<body>`.** A classic `<script>` in `<head>` runs *before*
+   `#root` exists, so React throws and the page stays blank. Module scripts are deferred; inlined
+   classic ones are not.
+2. **Use function replacers when inlining.** `String.replace(str, replacement)` treats `$&`, `$1`,
+   `` $` `` as patterns — the React bundle contains such sequences, and they will corrupt it.
+
+If you add an asset, put it in `src/` and import it so Vite inlines it; anything left in `public/`
+becomes an external file and breaks the single-file guarantee (`standalone:check` will fail on it).
 
 ## 9. Change the look
 
