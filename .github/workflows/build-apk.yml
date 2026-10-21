@@ -122,6 +122,19 @@ jobs:
           done
           ls -lh
 
+      - name: Verify APK
+        run: |
+          APK=$(ls out/*.apk | head -1)
+          AAPT=$(find "${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}/build-tools" -name aapt2 2>/dev/null | sort -r | head -1)
+          echo "APK: $APK ($(du -h "$APK" | cut -f1))"
+          unzip -l "$APK" | grep -E "assets/public/index.html|classes.dex|resources.arsc|assets/public/assets" | head -10
+          if [ -n "$AAPT" ]; then
+            "$AAPT" dump badging "$APK" | grep -E "^package|^application-label|^sdkVersion|^targetSdkVersion|^launchable-activity" || true
+          fi
+          # Mirror the essentials as a check annotation so it shows up in the run UI.
+          ID=$(unzip -p "$APK" AndroidManifest.xml >/dev/null 2>&1 && echo ok || echo missing)
+          echo "::notice title=APK::$(ls out/*.apk | head -1) · $(du -h "$APK" | cut -f1) · manifest:$ID · assets:$(unzip -l "$APK" | grep -c 'assets/public')"
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
