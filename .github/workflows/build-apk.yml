@@ -57,8 +57,10 @@ jobs:
       - name: Engine checks
         run: npm run engine:check
 
-      - name: Sync web build into the Android project
-        run: npx cap sync android
+      - name: Build web app + sync into the Android project
+        run: |
+          npm run build          # writes dist/ (cap sync copies it into the APK)
+          npx cap sync android
 
       - name: Build APK
         working-directory: android
