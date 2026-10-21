@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.engine-check.mjs
+*.local
+.DS_Store
+# android is committed so the APK can be built without regenerating it
+ios/
+*.log
+.env
+.env.*
+!.env.example
