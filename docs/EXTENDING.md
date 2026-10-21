@@ -5,9 +5,12 @@ ends with the same three commands:
 
 ```bash
 npm run engine:check   # did I break an invariant?
+npm run ui:smoke       # does the app still render and generate? (~1s)
 npm run dev            # look at it
 npm run build          # typecheck + bundle (also what CI does before the APK)
 ```
+
+`npm run check` runs both test suites.
 
 The engine is pure TypeScript with no DOM access, so `engine:check` runs it in Node in under a second.
 Add a case to `tools/engine-check.ts` whenever you change behaviour — that file is the contract.
