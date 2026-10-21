@@ -59,8 +59,19 @@ jobs:
 
       - name: Engine + UI checks
         run: |
-          npm run engine:check
-          npm run ui:smoke
+          set +e
+          npm run engine:check > /tmp/engine.log 2>&1; ENGINE=$?
+          npm run ui:smoke > /tmp/ui.log 2>&1; UI=$?
+          set -e
+          echo "----- engine:check (exit $ENGINE) -----"
+          cat /tmp/engine.log
+          echo "----- ui:smoke (exit $UI) -----"
+          cat /tmp/ui.log
+          if [ $ENGINE -ne 0 ] || [ $UI -ne 0 ]; then
+            { tail -12 /tmp/engine.log; tail -12 /tmp/ui.log; } | cut -c1-400 | sed 's/%/%25/g;s/\r//g' \
+              | while IFS= read -r line; do echo "::error title=Checks::${line:- }"; done
+            exit 1
+          fi
 
       - name: Build web app + sync into the Android project
         run: |
