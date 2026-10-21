@@ -57,8 +57,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Engine checks
-        run: npm run engine:check
+      - name: Engine + UI checks
+        run: |
+          npm run engine:check
+          npm run ui:smoke
 
       - name: Build web app + sync into the Android project
         run: |

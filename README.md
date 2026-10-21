@@ -20,14 +20,21 @@ to write sharper hooks.
 
 ## Get the app (Android)
 
-The APK is built by GitHub Actions:
+**Direct download:**
 
-1. Open **Actions → Build APK → Run workflow** (branch: `main`).
-2. When it finishes, download the **Hookline-APK** artifact.
-3. Copy it to your phone and open it. Allow *install unknown apps* when prompted.
+```
+https://github.com/amegocapital-wq/Negative-cap/releases/latest/download/Hookline.apk
+```
 
-Every push to `main` also builds an APK, and pushing a tag like `v1.0.0` publishes it as a GitHub
-Release (`/releases`). See [Signing](#signing) for a release-key build.
+Open that link on your phone → it downloads `Hookline.apk` → tap it → allow *install unknown apps*
+for your browser when Android asks.
+
+Every push to `main` also builds an APK you can grab from **Actions → Build APK → Hookline-APK**, and
+pushing a tag like `v1.0.1` publishes a fresh release at the link above.
+
+> Updating: CI build machines generate a fresh debug key each run, so a newer build may refuse to
+> install over an older one. Uninstall the old app first, or add a signing key once
+> ([Signing](#signing)) and every build will update in place.
 
 ## Run it in a browser
 
@@ -108,12 +115,16 @@ docs/EXTENDING.md       ← how to change things (start here)
 ## Quality gate
 
 ```bash
-npm run engine:check   # parsing, scoring, selection invariants, determinism
+npm run check          # engine + UI checks (what CI runs)
 npm run build          # typecheck + production bundle
 ```
 
-`engine:check` is deliberately assertive: it fails if any clip is missing a hook, overlaps another,
-runs past the transcript, or if ranking is not descending. CI runs it before every APK build.
+- `npm run engine:check` — parsing, scoring and selection invariants plus determinism. It fails if any
+  clip is missing a hook, overlaps another, runs past the transcript, or if ranking is not descending.
+- `npm run ui:smoke` — renders the real app in jsdom, generates a set, opens a clip, swaps a hook and
+  forces an AI-provider failure to prove the fallback works. Catches blank screens in about a second.
+
+CI runs both before every APK build.
 
 ## Signing
 
