@@ -37,8 +37,8 @@ external requests.
 Serve it locally with no dependencies at all:
 
 ```bash
-node standalone/serve.mjs        # → http://localhost:5173
-PORT=8080 node standalone/serve.mjs
+npm run serve                    # → http://localhost:5173
+PORT=8080 npm run serve
 ```
 
 ### 2. Android APK (native shell, installs like any app)
@@ -136,7 +136,9 @@ tools/
   make-icons.sh         regenerates the Android icon + splash art
 standalone/
   Hookline.html         ← the whole app in one file (generated, committed)
-  serve.mjs             zero-dependency static server
+  index.html            identical copy — this is what the APK ships
+tools/
+  serve-standalone.mjs  zero-dependency static server
 android/                committed Capacitor Android project
 docs/EXTENDING.md       ← how to change things (start here)
 ```

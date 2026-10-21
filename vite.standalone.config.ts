@@ -19,6 +19,12 @@ import type { Plugin } from 'vite';
 
 const OUT_DIR = resolve('standalone');
 const OUT_FILE = resolve(OUT_DIR, 'Hookline.html');
+/**
+ * The Android build ships this same file as its `index.html`
+ * (see `capacitor.config.ts` → webDir: 'standalone'), so the APK runs the exact
+ * bytes verified by `npm run standalone:check`.
+ */
+const OUT_INDEX = resolve(OUT_DIR, 'index.html');
 
 /** Inline the emitted bundle + stylesheet into a single self-contained HTML. */
 function inlineSingleFile(): Plugin {
@@ -71,9 +77,14 @@ function inlineSingleFile(): Plugin {
 
       mkdirSync(OUT_DIR, { recursive: true });
       writeFileSync(OUT_FILE, html, 'utf8');
+      // Identical copy: Capacitor needs an index.html in webDir.
+      writeFileSync(OUT_INDEX, html, 'utf8');
       const kb = (Buffer.byteLength(html) / 1024).toFixed(0);
       // eslint-disable-next-line no-console
-      console.log(`\n  standalone/Hookline.html  ${kb} kB  (single file, zero external requests)`);
+      console.log(
+        `\n  standalone/Hookline.html  ${kb} kB  (single file, zero external requests)` +
+          `\n  standalone/index.html     ${kb} kB  (same bytes — this is what the APK ships)`
+      );
     },
   };
 }

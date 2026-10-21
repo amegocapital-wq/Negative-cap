@@ -2,8 +2,8 @@
 /**
  * Hookline — dependency-free static server.
  *
- *   node standalone/serve.mjs            → http://0.0.0.0:5173
- *   PORT=8080 node standalone/serve.mjs
+ *   npm run serve                        → http://0.0.0.0:5173
+ *   PORT=8080 npm run serve
  *
  * Serves the self-contained `Hookline.html`. No node_modules, no build step, no
  * network calls, nothing to install — so the preview works even in a fresh
@@ -16,6 +16,8 @@ import { join, extname, normalize, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+/** The built app lives in ../standalone (only generated files there). */
+const APP_DIR = join(HERE, '..', 'standalone');
 const PORT = Number(process.env.PORT ?? 5173);
 const HOST = process.env.HOST ?? '0.0.0.0';
 
@@ -38,7 +40,7 @@ function resolveFile(urlPath) {
   if (safe === '/' || safe === '' || safe === '.') {
     for (const name of CANDIDATES) {
       try {
-        const full = join(HERE, name);
+        const full = join(APP_DIR, name);
         if (statSync(full).isFile()) return full;
       } catch {
         /* try next */
@@ -46,7 +48,7 @@ function resolveFile(urlPath) {
     }
     return null;
   }
-  const full = join(HERE, safe);
+  const full = join(APP_DIR, safe);
   try {
     return statSync(full).isFile() ? full : null;
   } catch {
@@ -89,7 +91,7 @@ const server = createServer((req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`\nHookline (standalone) listening on http://${HOST}:${PORT}`);
-  console.log(`  serving ${HERE}/Hookline.html — no dependencies required\n`);
+  console.log(`  serving ${APP_DIR}/index.html — no dependencies required\n`);
 });
 
 for (const signal of ['SIGINT', 'SIGTERM']) {

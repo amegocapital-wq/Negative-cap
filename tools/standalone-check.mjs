@@ -18,10 +18,14 @@ const fail = (message) => {
   process.exit(1);
 };
 
-const FILE = resolve('standalone/Hookline.html');
+// Default: the standalone build. Set HTML_FILE to check any other copy — e.g.
+// the payload extracted from a built APK:
+//   HTML_FILE=/tmp/apk-web/index.html npm run standalone:check
+const FILE = resolve(process.env.HTML_FILE ?? 'standalone/Hookline.html');
 if (!existsSync(FILE)) {
-  fail('standalone/Hookline.html is missing — run: npm run build:standalone');
+  fail(`${FILE} is missing — run: npm run build:standalone`);
 }
+console.log(`checking ${FILE}`);
 
 const html = readFileSync(FILE, 'utf8');
 const sizeKb = Math.round(Buffer.byteLength(html) / 1024);

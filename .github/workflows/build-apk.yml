@@ -99,10 +99,13 @@ jobs:
             exit 1
           fi
 
-      - name: Build web app + sync into the Android project
+      - name: Sync the single-file app into the Android project
         run: |
-          npm run build          # writes dist/ (cap sync copies it into the APK)
+          # webDir is `standalone`, so this puts the exact verified file into
+          # android/app/src/main/assets/public/index.html
+          npm run build:standalone
           npx cap sync android
+          md5sum standalone/index.html android/app/src/main/assets/public/index.html
 
       - name: Build APK
         working-directory: android
@@ -114,18 +117,23 @@ jobs:
         run: |
           chmod +x ./gradlew
           TASK=assembleDebug
-          EXTRA_ARGS=""
+          EXTRA_ARGS=()
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "Building signed release APK"
             echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
             TASK=assembleRelease
-            EXTRA_ARGS="-Pandroid.injected.signing.store.file=$RUNNER_TEMP/release.keystore               -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD               -Pandroid.injected.signing.key.alias=$KEY_ALIAS               -Pandroid.injected.signing.key.password=$KEY_PASSWORD"
+            EXTRA_ARGS=(
+              "-Pandroid.injected.signing.store.file=$RUNNER_TEMP/release.keystore"
+              "-Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD"
+              "-Pandroid.injected.signing.key.alias=$KEY_ALIAS"
+              "-Pandroid.injected.signing.key.password=$KEY_PASSWORD"
+            )
           else
             echo "Building debug APK (no keystore secret set)"
           fi
 
           set +e
-          ./gradlew "$TASK" --no-daemon --stacktrace $EXTRA_ARGS > /tmp/gradle.log 2>&1
+          ./gradlew "$TASK" --no-daemon --stacktrace "${EXTRA_ARGS[@]}" > /tmp/gradle.log 2>&1
           STATUS=$?
           set -e
 
@@ -160,6 +168,19 @@ jobs:
             fi
           done
           ls -lh
+
+      - name: Verify the APK payload actually boots
+        run: |
+          APK=$(ls out/*.apk | head -1)
+          rm -rf /tmp/apk-web && mkdir -p /tmp/apk-web
+          unzip -o -q "$APK" 'assets/public/*' -d /tmp/apk-web
+          ls -la /tmp/apk-web/assets/public | head
+          # Confirm the payload is byte-identical to the verified single-file build
+          md5sum standalone/index.html /tmp/apk-web/assets/public/index.html
+          cmp standalone/index.html /tmp/apk-web/assets/public/index.html \
+            && echo "APK payload matches the verified build"
+          # Boot the payload inside the APK in a DOM and drive the UI
+          HTML_FILE=/tmp/apk-web/assets/public/index.html npm run standalone:check
 
       - name: Verify APK
         run: |
