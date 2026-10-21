@@ -90,10 +90,15 @@ jobs:
           # Surface the reason as a check-run annotation (downloadable via API
           # even when the raw log blob is unreachable).
           if [ $STATUS -ne 0 ]; then
-            grep -E "What went wrong|^> |error:|FAILURE:|Caused by:|Could not|\*\*\*" /tmp/gradle.log \
-              | head -25 | sed 's/%/%25/g;s/\r//g' \
-              | while IFS= read -r line; do echo "::error title=Gradle::$line"; done
-            grep -E "What went wrong" -A 12 /tmp/gradle.log || true
+            # Print the actionable part of the log, then mirror it as annotations
+            # (the actions log blob is not always reachable from every client).
+            REASON=$(sed -n '/What went wrong/,/^\* Try/p' /tmp/gradle.log | head -40)
+            [ -z "$REASON" ] && REASON=$(grep -E "error:|FAILURE:|Could not|Caused by:" /tmp/gradle.log | head -20)
+            echo "----- gradle failure -----"
+            echo "$REASON"
+            echo "--------------------------"
+            echo "$REASON" | head -20 | cut -c1-400 | sed 's/%/%25/g;s/\r//g' \
+              | while IFS= read -r line; do echo "::error title=Gradle::${line:- }"; done
             exit $STATUS
           fi
 
