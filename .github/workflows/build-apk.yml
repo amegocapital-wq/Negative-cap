@@ -63,12 +63,28 @@ jobs:
           npm run engine:check > /tmp/engine.log 2>&1; ENGINE=$?
           npm run ui:smoke > /tmp/ui.log 2>&1; UI=$?
           set -e
-          echo "----- engine:check (exit $ENGINE) -----"
-          cat /tmp/engine.log
-          echo "----- ui:smoke (exit $UI) -----"
-          cat /tmp/ui.log
+
+          echo "===== engine:check (exit $ENGINE) ====="
+          tail -40 /tmp/engine.log
+          echo "===== ui:smoke (exit $UI) ====="
+          tail -40 /tmp/ui.log
+
           if [ $ENGINE -ne 0 ] || [ $UI -ne 0 ]; then
-            { tail -12 /tmp/engine.log; tail -12 /tmp/ui.log; } | cut -c1-400 | sed 's/%/%25/g;s/\r//g' \
+            {
+              echo "## Checks failed"
+              echo ""
+              echo "engine:check exit \`$ENGINE\` · ui:smoke exit \`$UI\`"
+              echo ""
+              echo "### engine log (tail)"
+              echo '```'
+              tail -25 /tmp/engine.log
+              echo '```'
+              echo "### ui log (tail)"
+              echo '```'
+              tail -25 /tmp/ui.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            tail -3 /tmp/ui.log | cut -c1-350 | sed 's/%/%25/g;s/\r//g' \
               | while IFS= read -r line; do echo "::error title=Checks::${line:- }"; done
             exit 1
           fi
