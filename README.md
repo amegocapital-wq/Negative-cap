@@ -47,7 +47,7 @@ The web version is the same app (Capacitor wraps it for Android), handy for quic
 
 ## Build the APK locally
 
-Prerequisites: Node 20+, JDK 17, Android SDK (or just Android Studio).
+Prerequisites: Node 22.19+ (the test tooling needs it), JDK 17, Android SDK (or just Android Studio).
 
 ```bash
 npm install
