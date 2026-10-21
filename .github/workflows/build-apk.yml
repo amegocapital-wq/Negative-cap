@@ -20,6 +20,9 @@ concurrency:
   group: apk-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write   # needed to attach the APK to a GitHub Release on tags
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -109,7 +112,14 @@ jobs:
           mkdir -p out
           find android/app/build/outputs/apk -name '*.apk' -exec cp {} out/ \;
           cd out
-          for f in *.apk; do mv "$f" "Hookline-${GITHUB_RUN_NUMBER}.apk"; done
+          for f in *.apk; do
+            if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+              # Stable filename → /releases/latest/download/Hookline.apk
+              mv "$f" "Hookline.apk"
+            else
+              mv "$f" "Hookline-${GITHUB_RUN_NUMBER}.apk"
+            fi
+          done
           ls -lh
 
       - name: Upload APK artifact
